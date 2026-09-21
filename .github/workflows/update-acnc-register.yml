@@ -1,0 +1,46 @@
+name: Update ACNC register archive
+
+on:
+  schedule:
+    # 09:00 Monday in Sydney is 22:00 or 23:00 Sunday UTC, depending on DST.
+    - cron: "0 22 * * 0"
+    - cron: "0 23 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-acnc-register
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select the Sydney 09:00 schedule
+        id: schedule
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_EVENT_SCHEDULE: ${{ github.event.schedule }}
+        run: python3 scripts/sydney_schedule_gate.py
+
+      - name: Download a new resource version
+        if: steps.schedule.outputs.run == 'true'
+        run: python3 scripts/fetch_acnc_register.py
+
+      - name: Commit and push changes
+        if: steps.schedule.outputs.run == 'true'
+        run: |
+          if git diff --quiet && git diff --cached --quiet; then
+            echo "No source update old enough to archive."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/acnc-register-of-australian-charaties
+          git commit -m "Archive ACNC register $(TZ=Australia/Sydney date +%Y-%m-%d)"
+          git push
