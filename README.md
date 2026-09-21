@@ -4,7 +4,7 @@ An automated archive of the [ACNC Register of Australian charities CSV](https://
 
 ## Schedule and behaviour
 
-The GitHub Actions workflow runs each Monday at 09:00 Australia/Sydney time. Because GitHub Actions cron schedules use UTC, two UTC schedules plus a daylight-saving gate keep the local run time correct throughout the year. The workflow can also be run manually.
+The GitHub Actions workflow uses timezone-aware scheduling to run each Monday at 09:00 Australia/Sydney time, including across daylight-saving changes. The workflow can also be run manually.
 
 On each eligible run it:
 
