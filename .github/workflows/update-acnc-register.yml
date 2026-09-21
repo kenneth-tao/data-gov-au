@@ -31,6 +31,6 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/acnc-register-of-australian-charaties
+          git add data/acnc-register-of-australian-charities
           git commit -m "Archive ACNC register $(TZ=Australia/Sydney date +%Y-%m-%d)"
           git push

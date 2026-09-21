@@ -11,7 +11,7 @@ On each eligible run it:
 1. Exits immediately if an archive has already been downloaded that Sydney calendar day.
 2. Reads the resource's `last_modified` value from the data.gov.au CKAN API.
 3. Downloads only when that value is at least seven days newer than the value archived on the previous successful run. If it is not ready, the next hourly run tries again.
-4. Validates the CSV and stores it in `data/acnc-register-of-australian-charaties/` as `datadotgov_main-YYYYMMDD.csv`, using the resource update date in Sydney.
+4. Validates the CSV and stores it in `data/acnc-register-of-australian-charities/` as `datadotgov_main-YYYYMMDD.csv`, using the resource update date in Sydney.
 5. Records the successful Sydney run date, retains the newest four CSV versions, and commits any changes.
 
 The state file in the data directory records both the source timestamp and the Sydney date of the latest successful download.

@@ -17,7 +17,7 @@ from zoneinfo import ZoneInfo
 PACKAGE_ID = "b050b242-4487-4306-abf5-07ca073e5594"
 RESOURCE_ID = "8fb32972-24e9-4c95-885e-7140be51be8a"
 API_URL = f"https://data.gov.au/data/api/3/action/package_show?id={PACKAGE_ID}"
-DATA_DIR = Path("data/acnc-register-of-australian-charaties")
+DATA_DIR = Path("data/acnc-register-of-australian-charities")
 STATE_FILE = DATA_DIR / ".resource-state.json"
 ARCHIVE_PREFIX = "datadotgov_main-"
 MAX_VERSIONS = 4
