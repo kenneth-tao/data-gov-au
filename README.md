@@ -4,17 +4,17 @@ An automated archive of the [ACNC Register of Australian charities CSV](https://
 
 ## Schedule and behaviour
 
-The GitHub Actions workflow uses timezone-aware scheduling to run each Monday at 09:00 Australia/Sydney time, including across daylight-saving changes. The workflow can also be run manually.
+The GitHub Actions workflow uses timezone-aware scheduling to try each Monday at 09:00, 10:00, 11:00, and 12:00 Australia/Sydney time, including across daylight-saving changes. The workflow can also be run manually.
 
 On each eligible run it:
 
-1. Reads the resource's `last_modified` value from the data.gov.au CKAN API.
-2. Continues only when that value is at least seven days newer than the value archived on the previous successful run.
-3. Downloads and validates the CSV.
-4. Stores it in `data/acnc-register-of-australian-charaties/` as `datadotgov_main-YYYYMMDD.csv`, using the resource update date in Sydney.
-5. Retains the newest four CSV versions and commits any changes.
+1. Exits immediately if an archive has already been downloaded that Sydney calendar day.
+2. Reads the resource's `last_modified` value from the data.gov.au CKAN API.
+3. Downloads only when that value is at least seven days newer than the value archived on the previous successful run. If it is not ready, the next hourly run tries again.
+4. Validates the CSV and stores it in `data/acnc-register-of-australian-charaties/` as `datadotgov_main-YYYYMMDD.csv`, using the resource update date in Sydney.
+5. Records the successful Sydney run date, retains the newest four CSV versions, and commits any changes.
 
-The state file in the data directory records the source timestamp used by the next run.
+The state file in the data directory records both the source timestamp and the Sydney date of the latest successful download.
 
 ## Run locally
 

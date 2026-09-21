@@ -5,7 +5,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 
-from fetch_acnc_register import archive_name, parse_ckan_datetime, should_download
+from fetch_acnc_register import (
+    archive_name,
+    completed_today,
+    parse_ckan_datetime,
+    should_download,
+)
 
 
 class FetchTests(unittest.TestCase):
@@ -25,6 +30,17 @@ class FetchTests(unittest.TestCase):
     def test_archive_uses_sydney_source_date(self):
         update = parse_ckan_datetime("2026-09-20T19:00:20.049365")
         self.assertEqual(archive_name(update), "datadotgov_main-20260921.csv")
+
+    def test_completed_today_uses_sydney_date(self):
+        state = {"successful_run_date_sydney": "2026-09-21"}
+        same_day = datetime(2026, 9, 21, 1, tzinfo=timezone.utc)
+        next_day = datetime(2026, 9, 21, 15, tzinfo=timezone.utc)
+        self.assertTrue(completed_today(state, same_day))
+        self.assertFalse(completed_today(state, next_day))
+
+    def test_missing_successful_date_does_not_skip(self):
+        now = datetime(2026, 9, 21, 1, tzinfo=timezone.utc)
+        self.assertFalse(completed_today({}, now))
 
 
 if __name__ == "__main__":

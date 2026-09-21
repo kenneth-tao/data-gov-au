@@ -2,7 +2,7 @@ name: Update ACNC register archive
 
 on:
   schedule:
-    - cron: "0 9 * * 1"
+    - cron: "0 9-12 * * 1"
       timezone: "Australia/Sydney"
   workflow_dispatch:
 

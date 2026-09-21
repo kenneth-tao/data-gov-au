@@ -39,6 +39,15 @@ def should_download(current: datetime, previous: datetime | None) -> bool:
     return previous is None or current - previous >= MIN_UPDATE_AGE
 
 
+def sydney_date(moment: datetime) -> str:
+    return moment.astimezone(SYDNEY).date().isoformat()
+
+
+def completed_today(state: dict[str, Any], now: datetime) -> bool:
+    """Return whether an archive was already downloaded today in Sydney."""
+    return state.get("successful_run_date_sydney") == sydney_date(now)
+
+
 def request_json(url: str) -> dict[str, Any]:
     request = urllib.request.Request(
         url,
@@ -57,11 +66,10 @@ def find_resource(payload: dict[str, Any]) -> dict[str, Any]:
     raise RuntimeError(f"Resource {RESOURCE_ID} was not present in package metadata")
 
 
-def read_previous_update() -> datetime | None:
+def read_state() -> dict[str, Any]:
     if not STATE_FILE.exists():
-        return None
-    state = json.loads(STATE_FILE.read_text(encoding="utf-8"))
-    return parse_ckan_datetime(state["source_last_modified"])
+        return {}
+    return json.loads(STATE_FILE.read_text(encoding="utf-8"))
 
 
 def archive_name(last_modified: datetime) -> str:
@@ -107,37 +115,49 @@ def remove_old_versions() -> list[Path]:
     return removed
 
 
-def write_state(resource: dict[str, Any], archive: Path) -> None:
+def write_state(resource: dict[str, Any], archive: Path, now: datetime) -> None:
     state = {
         "resource_id": RESOURCE_ID,
         "source_last_modified": resource["last_modified"],
         "source_url": resource["url"],
         "archive_file": archive.name,
-        "fetched_at_utc": datetime.now(timezone.utc).isoformat(),
+        "fetched_at_utc": now.isoformat(),
+        "successful_run_date_sydney": sydney_date(now),
     }
     STATE_FILE.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
 
 
 def main() -> int:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
+    now = datetime.now(timezone.utc)
+    state = read_state()
+    if completed_today(state, now):
+        print(f"No action needed: an archive was already downloaded on {sydney_date(now)}.")
+        return 0
+
     resource = find_resource(request_json(API_URL))
     if not resource.get("last_modified") or not resource.get("url"):
         raise RuntimeError("Resource metadata is missing last_modified or url")
 
     current_update = parse_ckan_datetime(resource["last_modified"])
-    previous_update = read_previous_update()
+    previous_update = (
+        parse_ckan_datetime(state["source_last_modified"])
+        if state.get("source_last_modified")
+        else None
+    )
     if not should_download(current_update, previous_update):
         elapsed = current_update - previous_update  # type: ignore[operator]
         print(
-            "No archive created: source update advanced by "
-            f"{elapsed.days} days, less than the required 7 days."
+            "No archive created yet: source update advanced by "
+            f"{elapsed.days} days, less than the required 7 days. "
+            "The next scheduled hourly run will try again."
         )
         return 0
 
     destination = DATA_DIR / archive_name(current_update)
     download_csv(resource["url"], destination)
     removed = remove_old_versions()
-    write_state(resource, destination)
+    write_state(resource, destination, now)
 
     print(f"Archived {destination} ({destination.stat().st_size:,} bytes)")
     for path in removed:
